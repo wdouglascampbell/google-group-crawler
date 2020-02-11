@@ -65,8 +65,7 @@ _links_dump() {
     $_WGET_OPTIONS \
     -O- "$@" \
   | sed -e "s#['\"]#\\"$'\n#g' \
-  | grep -E '^https?://' \
-  | sort -u
+  | grep -E '^https?://'
 }
 
 # $1: output file [/path/to/directory/prefix]
@@ -159,25 +158,23 @@ _main() {
   find "$_D_OUTPUT"/threads/ -type f -iname "t.[0-9]*" -exec cat {} \; \
   | grep '^https://' \
   | grep "/d/topic/$_GROUP" \
-  | sort -u \
   | sed -e 's#/d/topic/#/forum/?_escaped_fragment_=topic/#g' \
   | while read -r _url; do
       _topic_id="${_url##*/}"
       _download_page "$_D_OUTPUT/msgs/m.${_topic_id}" "$_url"
-      #                                 <--+------->
-    done #                                 |
-  #                                       /
-  # FIXME: Sorting issue here -----------'
-
+    done
+  
+  i=0
   echo >&2 ":: Downloading all raw messages..."
   find "$_D_OUTPUT"/msgs/ -type f -iname "m.*" -exec cat {} \; \
   | grep '^https://' \
   | grep '/d/msg/' \
-  | sort -u \
   | sed -e 's#/d/msg/#/forum/message/raw?msg=#g' \
   | while read -r _url; do
       _id="$(echo "$_url"| sed -e "s#.*=$_GROUP/##g" -e 's#/#.#g')"
-      echo "__wget__ \"$_D_OUTPUT/mbox/m.${_id}\" \"$_url\""
+      num=$(printf "%06d" $i)
+      echo "__wget__ \"$_D_OUTPUT/mbox/m.${num}${_id}\" \"$_url\""
+      ((i=i+1))
     done
 }
 
